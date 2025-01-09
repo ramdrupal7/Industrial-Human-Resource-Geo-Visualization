@@ -13,6 +13,7 @@ import string
 # Download stopwords for text processing
 nltk.download('stopwords')
 
+
 # 1. Load and Merge Data from ZIP file (Modified for Streamlit file uploader)
 def extract_zip(uploaded_file):
     # Create a temporary directory to extract the ZIP file
@@ -90,7 +91,7 @@ def clean_data(df):
     st.write(df.isnull().sum())
     return df
 
-# 4. Text Preprocessing
+# 4. Text Preprocessing (dynamic handling of stopwords)
 def preprocess_text(text):
     stop_words = set(stopwords.words('english'))
     text = text.lower()  # Lowercase the text
@@ -106,7 +107,7 @@ def feature_engineering(df):
     st.write("TF-IDF Features Shape:", X.shape)
     return X
 
-# 6. Clustering
+# 6. Clustering (Unsupervised Learning - KMeans)
 def perform_clustering(X, df, num_clusters=4):
     kmeans = KMeans(n_clusters=num_clusters, random_state=42)
     df['cluster'] = kmeans.fit_predict(X)
@@ -121,51 +122,21 @@ def reduce_dimensions(X):
     st.write("PCA Reduced Features Shape:", X_reduced.shape)
     return X_reduced
 
-# 8. Streamlit Visualization - State-wise and Overall
-def visualize_data_dynamic(df):
-    # Dropdown for selecting a specific state
-    states = df['India/States'].unique()
-    selected_state = st.selectbox("Select a State for Drill-Down Analysis", ["All States"] + list(states))
-
-    # Filter data based on the selected state
-    if selected_state != "All States":
-        state_data = df[df['India/States'] == selected_state]
-        st.write(f"### Data for {selected_state}")
-    else:
-        state_data = df
-        st.write("### Overall Data for All States")
-
-    # Bar Chart Visualization
-    fig = px.bar(state_data, x="NIC Name", y="Main Workers - Total -  Persons", color="India/States",
-                 title=f"Workers Population by Industry ({selected_state})",
-                 labels={"Main Workers - Total -  Persons": "Number of Workers"})
+# 8. Streamlit Visualization
+def visualize_data(df):
+    fig = px.bar(df, x="NIC Name", y="Main Workers - Total -  Persons", color="India/States",
+                 title="Workers Population by Industry and Geography", labels={"Main Workers - Total -  Persons": "Number of Workers"})
     st.plotly_chart(fig)
 
-# 9. Streamlit PCA Visualization - State-wise and Overall
-def visualize_pca_dynamic(X_reduced, df):
-    # Dropdown for selecting a specific state
-    states = df['India/States'].unique()
-    selected_state = st.selectbox("Select a State for PCA Analysis", ["All States"] + list(states))
-
-    # Filter data based on the selected state
-    if selected_state != "All States":
-        state_data = df[df['India/States'] == selected_state]
-        X_reduced = X_reduced[df['India/States'] == selected_state]
-        st.write(f"### PCA Analysis for {selected_state}")
-    else:
-        state_data = df
-        st.write("### Overall PCA Analysis for All States")
-
-    # PCA Visualization
+# 9. Streamlit PCA Visualization
+def visualize_pca(X_reduced, df):
     pca_df = pd.DataFrame(X_reduced, columns=["PC1", "PC2"])
-    pca_df['NIC Name'] = state_data['NIC Name']
-    pca_df['India/States'] = state_data['India/States']
-
-    fig_pca = px.scatter(pca_df, x="PC1", y="PC2", color="India/States",
-                         title=f"PCA Visualization ({selected_state})")
+    pca_df['NIC Name'] = df['NIC Name']
+    fig_pca = px.scatter(pca_df, x="PC1", y="PC2", color=df['India/States'],
+                         title="PCA Visualization of Industries")
     st.plotly_chart(fig_pca)
 
-# Main function
+# Main function to execute the entire pipeline and build Streamlit dashboard
 def main():
     # Step 1: Load and Merge CSV data
     df = load_and_merge_data()
@@ -193,8 +164,8 @@ def main():
         # Step 7: Create Streamlit app for visualization
         st.title('Business Industry Analysis Dashboard')
         st.write("### Industry Cluster Visualization")
-        visualize_data_dynamic(df_clustered)
-        visualize_pca_dynamic(X_reduced, df_clustered)
+        visualize_data(df_clustered)
+        visualize_pca(X_reduced, df_clustered)
 
 if __name__ == '__main__':
     main()
