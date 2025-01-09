@@ -24,8 +24,16 @@ def extract_zip(uploaded_file):
     with zipfile.ZipFile(uploaded_file, 'r') as zip_ref:
         zip_ref.extractall(temp_dir)
     
-    # Return the list of CSV files extracted
-    return [os.path.join(temp_dir, file) for file in os.listdir(temp_dir) if file.endswith('.csv')]
+    # Navigate into the 'DataSets' folder
+    datasets_folder = os.path.join(temp_dir, 'DataSets')
+    if not os.path.exists(datasets_folder):
+        st.write("DataSets folder not found in the ZIP file.")
+        return []
+
+    # Get all CSV files inside the 'DataSets' folder
+    csv_files = [os.path.join(datasets_folder, file) for file in os.listdir(datasets_folder) if file.endswith('.csv')]
+    
+    return csv_files
 
 # Load and merge CSV files extracted from ZIP
 def load_and_merge_data():
@@ -38,6 +46,10 @@ def load_and_merge_data():
 
     # Extract the ZIP and get the list of CSV files
     csv_files = extract_zip(uploaded_file)
+    if not csv_files:
+        st.write("No CSV files found inside the 'DataSets' folder.")
+        return None
+
     st.write(f"Extracted {len(csv_files)} CSV files.")
 
     # Load all CSV files into DataFrames and merge them
