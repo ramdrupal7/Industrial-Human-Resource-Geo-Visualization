@@ -135,3 +135,5 @@ pandas
 scikit-learn
 nltk
 plotly
+seaborn
+wordcloud
