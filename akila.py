@@ -91,7 +91,7 @@ if uploaded_file is not None:
             geojson="https://gist.githubusercontent.com/jbrobst/56c13bbbf9d97d187fea01ca62ea5112/raw/e388c4cae20aa53cb5090210a42ebb9b765c0a36/india_states.geojson",
             featureidkey='properties.ST_NM',
             locationmode='geojson-id',
-            locations=df['State Code'],  # Ensure this matches your dataset
+            locations=df['StateCode'],  # Ensure this matches your dataset
             z=df['TotalWorkers'],   # Replace with appropriate numeric data
             colorscale='Reds',
             marker_line_color='peachpuff',
