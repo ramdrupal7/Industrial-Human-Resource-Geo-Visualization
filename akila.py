@@ -70,9 +70,16 @@ if uploaded_file is not None:
                       title="Worker Population Distribution Across Industries")
         st.plotly_chart(fig1)
 
-        # Visualization: Correlation Matrix
+        # Data Cleaning for Numeric Columns and Correlation Matrix
+        # Filter out non-numeric columns for correlation matrix
+        numeric_df = df.select_dtypes(include=[np.number])
+
+        # Check for missing values and handle them
+        numeric_df = numeric_df.fillna(0)  # or you can use numeric_df.dropna() if you want to drop rows with NaN values
+
+        # Compute and plot the correlation matrix
         fig2, ax = plt.subplots(figsize=(12, 10))
-        sns.heatmap(df.corr(), annot=True, cmap='coolwarm', fmt='.2f', ax=ax)
+        sns.heatmap(numeric_df.corr(), annot=True, cmap='coolwarm', fmt='.2f', ax=ax)
         st.pyplot(fig2)
 
         # Interactive Choropleth Map
