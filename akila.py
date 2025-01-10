@@ -86,20 +86,20 @@ if uploaded_file is not None:
 
         # Interactive Choropleth Map (Total Workers)
         fig3 = go.Figure(data=go.Choropleth(
-            geojson="https://gist.githubusercontent.com/jbrobst/56c13bbbf9d97d187fea01ca62ea5112/raw/e388c4cae20aa53cb5090210a42ebb9b765c0a36/india_states.geojson",
-            featureidkey='properties.ST_NM',
-            locationmode='geojson-id',
-            locations=df['StateCode'],  # Ensure this matches your dataset
+            geojson="https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/indiana-counties.geojson",  # Change this to match your geography
+            featureidkey="properties.name",  # Adjust based on your geojson file
+            locations=df['StateCode'],  # Ensure this matches your dataset's state codes
             z=df['TotalWorkers'],   # Replace with appropriate numeric data
             colorscale='Reds',
             marker_line_color='peachpuff',
             colorbar=dict(title="Total Workers")
         ))
+
         fig3.update_geos(
             visible=False,
-            projection=dict(type='conic conformal', parallels=[12.472944444, 35.172805555556], rotation={'lat': 24, 'lon': 80}),
-            lonaxis={'range': [68, 98]},
-            lataxis={'range': [6, 38]}
+            projection=dict(type='albers usa'),  # Adjust for your country
+            lonaxis={'range': [-180, 180]},
+            lataxis={'range': [-90, 90]}
         )
         fig3.update_layout(title="Total Workers Across States", height=550, width=550)
         st.plotly_chart(fig3)
