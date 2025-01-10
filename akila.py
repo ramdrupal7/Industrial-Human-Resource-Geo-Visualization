@@ -82,7 +82,7 @@ if uploaded_file is not None:
         sns.heatmap(numeric_df.corr(), annot=True, cmap='coolwarm', fmt='.2f', ax=ax)
         st.pyplot(fig2)
 
-        # Interactive Choropleth Map
+        # Interactive Choropleth Map (Total Workers)
         fig3 = go.Figure(data=go.Choropleth(
             geojson="https://gist.githubusercontent.com/jbrobst/56c13bbbf9d97d187fea01ca62ea5112/raw/e388c4cae20aa53cb5090210a42ebb9b765c0a36/india_states.geojson",
             featureidkey='properties.ST_NM',
@@ -102,11 +102,60 @@ if uploaded_file is not None:
         fig3.update_layout(title="Total Workers Across States", height=550, width=550)
         st.plotly_chart(fig3)
 
+        # New Choropleth Map (Active Cases)
+        fig4 = go.Figure(data=go.Choropleth(
+            geojson="https://gist.githubusercontent.com/jbrobst/56c13bbbf9d97d187fea01ca62ea5112/raw/e388c4cae20aa53cb5090210a42ebb9b765c0a36/india_states.geojson",
+            featureidkey='properties.ST_NM',
+            locationmode='geojson-id',
+            locations=df['state'],  # Ensure this matches your dataset
+            z=df['active_cases'],  # Ensure this column exists in your dataset
+            autocolorscale=False,
+            colorscale='Reds',
+            marker_line_color='peachpuff',
+            colorbar=dict(
+                title={'text': "Active Cases"},
+                thickness=15,
+                len=0.35,
+                bgcolor='rgba(255,255,255,0.6)',
+                tick0=0,
+                dtick=20000,
+                xanchor='left',
+                x=0.01,
+                yanchor='bottom',
+                y=0.05
+            )
+        ))
+        fig4.update_geos(
+            visible=False,
+            projection=dict(
+                type='conic conformal',
+                parallels=[12.472944444, 35.172805555556],
+                rotation={'lat': 24, 'lon': 80}
+            ),
+            lonaxis={'range': [68, 98]},
+            lataxis={'range': [6, 38]}
+        )
+        fig4.update_layout(
+            title=dict(
+                text="Active COVID-19 Cases in India by State as of July 17, 2020",
+                xanchor='center',
+                x=0.5,
+                yref='paper',
+                yanchor='bottom',
+                y=1,
+                pad={'b': 10}
+            ),
+            margin={'r': 0, 't': 30, 'l': 0, 'b': 0},
+            height=550,
+            width=550
+        )
+        st.plotly_chart(fig4)
+
         # WordCloud for Industry Terms
         wordcloud = WordCloud(background_color='white').generate(' '.join(df[industry_column].dropna()))
-        fig4, ax = plt.subplots()
+        fig5, ax = plt.subplots()
         ax.imshow(wordcloud, interpolation='bilinear')
         ax.axis('off')
-        st.pyplot(fig4)
+        st.pyplot(fig5)
     else:
         st.write("No valid CSV files found in the ZIP file.")
