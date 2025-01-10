@@ -82,10 +82,6 @@ if uploaded_file is not None:
         sns.heatmap(numeric_df.corr(), annot=True, cmap='coolwarm', fmt='.2f', ax=ax)
         st.pyplot(fig2)
 
-        st.write(df.columns)
-        print('Colums')
-        print(df.columns)
-
         # Interactive Choropleth Map
         fig3 = go.Figure(data=go.Choropleth(
             geojson="https://gist.githubusercontent.com/jbrobst/56c13bbbf9d97d187fea01ca62ea5112/raw/e388c4cae20aa53cb5090210a42ebb9b765c0a36/india_states.geojson",
