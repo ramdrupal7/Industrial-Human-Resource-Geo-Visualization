@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import os
+import zipfile
 import matplotlib.pyplot as plt
 import seaborn as sns
 import plotly.graph_objects as go
@@ -10,71 +11,95 @@ from sklearn.cluster import KMeans
 from wordcloud import WordCloud
 import streamlit as st
 
-# Set the directory containing the datasets
-directory = "D:\\workspace\\datascience\\Streamlite\\DataSets"
-files = [os.path.join(directory, f) for f in os.listdir(directory) if f.endswith('.csv')]
+# Define the extract_zip function
+def extract_zip(uploaded_file):
+    # Create a temporary directory to extract the ZIP file
+    temp_dir = "temp_files"
+    if not os.path.exists(temp_dir):
+        os.makedirs(temp_dir)
 
-# Load all CSV files and combine them into a single DataFrame
-dataframes = [pd.read_csv(file, encoding='latin1') for file in files]
-df = pd.concat(dataframes, ignore_index=True)
+    with zipfile.ZipFile(uploaded_file, 'r') as zip_ref:
+        zip_ref.extractall(temp_dir)
+    
+    # Navigate into the 'DataSets' folder
+    datasets_folder = os.path.join(temp_dir, 'DataSets')
+    if not os.path.exists(datasets_folder):
+        st.write("DataSets folder not found in the ZIP file.")
+        return []
 
-# Save combined data to a CSV
-df.to_csv("all_combined.csv", index=False)
+    # Get all CSV files inside the 'DataSets' folder
+    csv_files = [os.path.join(datasets_folder, file) for file in os.listdir(datasets_folder) if file.endswith('.csv')]
+    
+    return csv_files
 
-# Data Cleaning
-columns_to_clean = ['State Code', 'District Code', 'Division', 'Group', 'Class']
-for col in columns_to_clean:
-    df[col] = df[col].astype(str).str.replace('`', '').astype(int)
+# Streamlit file uploader for ZIP files
+uploaded_file = st.file_uploader("Upload a ZIP file containing datasets", type="zip")
+if uploaded_file is not None:
+    csv_files = extract_zip(uploaded_file)
+    if csv_files:
+        # Load all extracted CSV files and combine them into a single DataFrame
+        dataframes = [pd.read_csv(file, encoding='latin1') for file in csv_files]
+        df = pd.concat(dataframes, ignore_index=True)
 
-# Remove special characters from column names
-df.columns = [''.join(c for c in col if c.isalnum() or c in ('_', '.')) for col in df.columns]
+        # Save combined data to a CSV
+        df.to_csv("all_combined.csv", index=False)
 
-# Feature Engineering
-df['TotalWorkers'] = df['MainWorkersTotalPersons'] + df['MarginalWorkersTotalPersons']
-df['MaleFemaleRatio'] = df['MainWorkersTotalMales'] / df['MainWorkersTotalFemales'].replace(0, 1)
+        # Data Cleaning
+        columns_to_clean = ['State Code', 'District Code', 'Division', 'Group', 'Class']
+        for col in columns_to_clean:
+            df[col] = df[col].astype(str).str.replace('`', '').astype(int)
 
-# NLP Analysis for Industries
-industry_column = 'NICName'  # Assuming this column contains industry info
-tfidf = TfidfVectorizer(stop_words='english')
-industry_tfidf = tfidf.fit_transform(df[industry_column].fillna(''))
+        # Remove special characters from column names
+        df.columns = [''.join(c for c in col if c.isalnum() or c in ('_', '.')) for col in df.columns]
 
-# Cluster industries
-kmeans = KMeans(n_clusters=5, random_state=42)
-df['IndustryCluster'] = kmeans.fit_predict(industry_tfidf)
+        # Feature Engineering
+        df['TotalWorkers'] = df['MainWorkersTotalPersons'] + df['MarginalWorkersTotalPersons']
+        df['MaleFemaleRatio'] = df['MainWorkersTotalMales'] / df['MainWorkersTotalFemales'].replace(0, 1)
 
-# Visualization: Worker Distribution by Industries
-fig1 = px.bar(df, x='IndustryCluster', y='TotalWorkers', color='IndustryCluster',
-              title="Worker Population Distribution Across Industries")
-st.plotly_chart(fig1)
+        # NLP Analysis for Industries
+        industry_column = 'NICName'  # Assuming this column contains industry info
+        tfidf = TfidfVectorizer(stop_words='english')
+        industry_tfidf = tfidf.fit_transform(df[industry_column].fillna(''))
 
-# Visualization: Correlation Matrix
-fig2, ax = plt.subplots(figsize=(12, 10))
-sns.heatmap(df.corr(), annot=True, cmap='coolwarm', fmt='.2f', ax=ax)
-st.pyplot(fig2)
+        # Cluster industries
+        kmeans = KMeans(n_clusters=5, random_state=42)
+        df['IndustryCluster'] = kmeans.fit_predict(industry_tfidf)
 
-# Interactive Choropleth Map
-fig3 = go.Figure(data=go.Choropleth(
-    geojson="https://gist.githubusercontent.com/jbrobst/56c13bbbf9d97d187fea01ca62ea5112/raw/e388c4cae20aa53cb5090210a42ebb9b765c0a36/india_states.geojson",
-    featureidkey='properties.ST_NM',
-    locationmode='geojson-id',
-    locations=df['State'],  # Ensure this matches your dataset
-    z=df['TotalWorkers'],   # Replace with appropriate numeric data
-    colorscale='Reds',
-    marker_line_color='peachpuff',
-    colorbar=dict(title="Total Workers")
-))
-fig3.update_geos(
-    visible=False,
-    projection=dict(type='conic conformal', parallels=[12.472944444, 35.172805555556], rotation={'lat': 24, 'lon': 80}),
-    lonaxis={'range': [68, 98]},
-    lataxis={'range': [6, 38]}
-)
-fig3.update_layout(title="Total Workers Across States", height=550, width=550)
-st.plotly_chart(fig3)
+        # Visualization: Worker Distribution by Industries
+        fig1 = px.bar(df, x='IndustryCluster', y='TotalWorkers', color='IndustryCluster',
+                      title="Worker Population Distribution Across Industries")
+        st.plotly_chart(fig1)
 
-# WordCloud for Industry Terms
-wordcloud = WordCloud(background_color='white').generate(' '.join(df[industry_column].dropna()))
-fig4, ax = plt.subplots()
-ax.imshow(wordcloud, interpolation='bilinear')
-ax.axis('off')
-st.pyplot(fig4)
+        # Visualization: Correlation Matrix
+        fig2, ax = plt.subplots(figsize=(12, 10))
+        sns.heatmap(df.corr(), annot=True, cmap='coolwarm', fmt='.2f', ax=ax)
+        st.pyplot(fig2)
+
+        # Interactive Choropleth Map
+        fig3 = go.Figure(data=go.Choropleth(
+            geojson="https://gist.githubusercontent.com/jbrobst/56c13bbbf9d97d187fea01ca62ea5112/raw/e388c4cae20aa53cb5090210a42ebb9b765c0a36/india_states.geojson",
+            featureidkey='properties.ST_NM',
+            locationmode='geojson-id',
+            locations=df['State'],  # Ensure this matches your dataset
+            z=df['TotalWorkers'],   # Replace with appropriate numeric data
+            colorscale='Reds',
+            marker_line_color='peachpuff',
+            colorbar=dict(title="Total Workers")
+        ))
+        fig3.update_geos(
+            visible=False,
+            projection=dict(type='conic conformal', parallels=[12.472944444, 35.172805555556], rotation={'lat': 24, 'lon': 80}),
+            lonaxis={'range': [68, 98]},
+            lataxis={'range': [6, 38]}
+        )
+        fig3.update_layout(title="Total Workers Across States", height=550, width=550)
+        st.plotly_chart(fig3)
+
+        # WordCloud for Industry Terms
+        wordcloud = WordCloud(background_color='white').generate(' '.join(df[industry_column].dropna()))
+        fig4, ax = plt.subplots()
+        ax.imshow(wordcloud, interpolation='bilinear')
+        ax.axis('off')
+        st.pyplot(fig4)
+    else:
+        st.write("No valid CSV files found in the ZIP file.")
