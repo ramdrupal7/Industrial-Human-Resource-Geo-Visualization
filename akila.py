@@ -107,7 +107,7 @@ if uploaded_file is not None:
             geojson="https://gist.githubusercontent.com/jbrobst/56c13bbbf9d97d187fea01ca62ea5112/raw/e388c4cae20aa53cb5090210a42ebb9b765c0a36/india_states.geojson",
             featureidkey='properties.ST_NM',
             locationmode='geojson-id',
-            locations=df['state'],  # Ensure this matches your dataset
+            locations=df['StateCode'],  # Ensure this matches your dataset
             z=df['active_cases'],  # Ensure this column exists in your dataset
             autocolorscale=False,
             colorscale='Reds',
