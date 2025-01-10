@@ -106,7 +106,7 @@ if uploaded_file is not None:
 
         # Word Cloud for Industries
         wordcloud = WordCloud(width=800, height=400).generate(' '.join(df['NICName'].fillna('')))
-        st.image(wordcloud.to_array(), use_column_width=True)
+        st.image(wordcloud.to_array(), use_container_width=True)
 
         # Additional Cluster Visualization with PCA for better understanding of clustering
         from sklearn.decomposition import PCA
