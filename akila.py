@@ -52,6 +52,8 @@ if uploaded_file is not None:
         # Remove special characters from column names
         df.columns = [''.join(c for c in col if c.isalnum() or c in ('_', '.')) for col in df.columns]
 
+        print(df.columns)
+
         # Feature Engineering
         df['TotalWorkers'] = df['MainWorkersTotalPersons'] + df['MarginalWorkersTotalPersons']
         df['MaleFemaleRatio'] = df['MainWorkersTotalMales'] / df['MainWorkersTotalFemales'].replace(0, 1)
@@ -108,7 +110,7 @@ if uploaded_file is not None:
             featureidkey='properties.ST_NM',
             locationmode='geojson-id',
             locations=df['StateCode'],  # Ensure this matches your dataset
-            z=df['active_cases'],  # Ensure this column exists in your dataset
+            z=df['TotalWorkers'],  # Ensure this column exists in your dataset
             autocolorscale=False,
             colorscale='Reds',
             marker_line_color='peachpuff',
