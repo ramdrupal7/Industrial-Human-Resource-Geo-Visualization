@@ -83,6 +83,8 @@ if uploaded_file is not None:
         st.pyplot(fig2)
 
         st.write(df.columns)
+        print('Colums')
+        print(df.columns)
 
         # Interactive Choropleth Map
         fig3 = go.Figure(data=go.Choropleth(
